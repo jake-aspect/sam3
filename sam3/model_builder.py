@@ -2,15 +2,14 @@
 
 # pyre-unsafe
 
-import os
-from typing import Optional
-
 from importlib import resources as _pkg_resources
+from typing import TYPE_CHECKING, Optional
 
 import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from iopath.common.file_io import g_pathmgr
+
 from sam3.model.decoder import (
     TransformerDecoder,
     TransformerDecoderLayer,
@@ -27,23 +26,29 @@ from sam3.model.memory import (
     SimpleMaskEncoder,
 )
 from sam3.model.model_misc import (
-    DotProductScoring,
     MLP,
-    MultiheadAttentionWrapper as MultiheadAttention,
+    DotProductScoring,
     TransformerWrapper,
+)
+from sam3.model.model_misc import (
+    MultiheadAttentionWrapper as MultiheadAttention,
 )
 from sam3.model.necks import Sam3DualViTDetNeck
 from sam3.model.position_encoding import PositionEmbeddingSine
 from sam3.model.sam1_task_predictor import SAM3InteractiveImagePredictor
-from sam3.model.sam3_image import Sam3Image, Sam3ImageOnVideoMultiGPU
-from sam3.model.sam3_tracking_predictor import Sam3TrackerPredictor
-from sam3.model.sam3_video_inference import Sam3VideoInferenceWithInstanceInteractivity
-from sam3.model.sam3_video_predictor import Sam3VideoPredictorMultiGPU
+from sam3.model.sam3_image import Sam3Image
 from sam3.model.text_encoder_ve import VETextEncoder
 from sam3.model.tokenizer_ve import SimpleTokenizer
 from sam3.model.vitdet import ViT
 from sam3.model.vl_combiner import SAM3VLBackbone
 from sam3.sam.transformer import RoPEAttention
+
+if TYPE_CHECKING:
+    from sam3.model.sam3_tracking_predictor import Sam3TrackerPredictor
+    from sam3.model.sam3_video_inference import (
+        Sam3VideoInferenceWithInstanceInteractivity,
+    )
+    from sam3.model.sam3_video_predictor import Sam3VideoPredictorMultiGPU
 
 
 # Setup TensorFloat-32 for Ampere GPUs if available
@@ -238,7 +243,7 @@ def _create_geometry_encoder():
     # Create position encoding for geometry encoder
     geo_pos_enc = _create_position_encoding()
     # Create CX block for fuser
-    cx_block = CXBlock(
+    _cx_block = CXBlock(
         dim=256,
         kernel_size=7,
         padding=3,
@@ -434,13 +439,14 @@ def _create_tracker_transformer():
 
 def build_tracker(
     apply_temporal_disambiguation: bool, with_backbone: bool = False, compile_mode=None
-) -> Sam3TrackerPredictor:
+) -> "Sam3TrackerPredictor":
     """
     Build the SAM3 Tracker module for video tracking.
 
     Returns:
         Sam3TrackerPredictor: Wrapped SAM3 Tracker module
     """
+    from sam3.model.sam3_tracking_predictor import Sam3TrackerPredictor
 
     # Create model components
     maskmem_backbone = _create_tracker_maskmem_backbone()
@@ -661,7 +667,7 @@ def build_sam3_video_model(
     apply_temporal_disambiguation: bool = True,
     device="cuda" if torch.cuda.is_available() else "cpu",
     compile=False,
-) -> Sam3VideoInferenceWithInstanceInteractivity:
+) -> "Sam3VideoInferenceWithInstanceInteractivity":
     """
     Build SAM3 dense tracking model.
 
@@ -672,6 +678,11 @@ def build_sam3_video_model(
     Returns:
         Sam3VideoInferenceWithInstanceInteractivity: The instantiated dense tracking model
     """
+    from sam3.model.sam3_image import Sam3ImageOnVideoMultiGPU
+    from sam3.model.sam3_video_inference import (
+        Sam3VideoInferenceWithInstanceInteractivity,
+    )
+
     if bpe_path is None:
         bpe_path = str(
             _pkg_resources.files("sam3").joinpath("assets/bpe_simple_vocab_16e6.txt.gz")
@@ -792,7 +803,11 @@ def build_sam3_video_model(
     return model
 
 
-def build_sam3_video_predictor(*model_args, gpus_to_use=None, **model_kwargs):
+def build_sam3_video_predictor(
+    *model_args, gpus_to_use=None, **model_kwargs
+) -> "Sam3VideoPredictorMultiGPU":
+    from sam3.model.sam3_video_predictor import Sam3VideoPredictorMultiGPU
+
     return Sam3VideoPredictorMultiGPU(
         *model_args, gpus_to_use=gpus_to_use, **model_kwargs
     )
