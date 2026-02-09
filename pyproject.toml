@@ -39,6 +39,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# GPU acceleration -- installers pick one based on their platform.
+#   pip install sam3[triton]   # Linux + CUDA (fastest EDT / NMS kernels)
+#   pip install sam3[cupy]     # Linux or Windows + CUDA (zero-copy GPU scipy)
+triton = ["triton"]
+cupy = ["cupy-cuda12x"]        # adjust to cupy-cuda11x if needed
+
 dev = [
     "pytest",
     "pytest-cov",
@@ -53,8 +59,6 @@ notebooks = [
     "ipympl",
     "pycocotools",
     "decord",
-    "opencv-python",
-    "einops",
     "scikit-image",
     "scikit-learn",
 ]
@@ -63,7 +67,6 @@ train = [
     "submitit",
     "tensorboard",
     "zstandard",
-    "scipy",
     "torchmetrics",
     "fvcore",
     "fairscale",

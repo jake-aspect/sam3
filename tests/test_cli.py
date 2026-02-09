@@ -1,6 +1,4 @@
-"""
-Smoke tests for the SAM3 command-line interface.
-"""
+"""Smoke tests for the SAM3 command-line interface."""
 
 import subprocess
 import sys

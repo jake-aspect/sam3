@@ -1,3 +1,4 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 """
 SAM3 command-line interface (stub -- will be implemented in Step 16).
 """
