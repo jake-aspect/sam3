@@ -1,55 +1,48 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "sam3"
 dynamic = ["version"]
-description = "SAM3 (Segment Anything Model 3) implementation"
+description = "SAM3 (Segment Anything Model 3) -- Windows/CPU compatible fork"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Meta AI Research"}
+    {name = "Meta AI Research"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
     "timm>=1.0.17",
     "numpy>=1.26,<2",
     "tqdm",
-    "ftfy==6.1.1",
+    "ftfy>=6.1",
     "regex",
     "iopath>=0.1.10",
     "typing_extensions",
     "huggingface_hub",
+    "pillow",
+    "einops",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
     "pytest-cov",
-    "black==24.2.0",
-    "ufmt==2.8.0",
-    "ruff-api==0.1.0",
-    "usort==1.0.2",
-    "gitpython==3.1.31",
-    "yt-dlp",
-    "pandas",
-    "opencv-python",
-    "pycocotools",
-    "numba",
-    "python-rapidjson",
+    "ruff",
 ]
 notebooks = [
     "matplotlib",
@@ -77,56 +70,69 @@ train = [
     "scikit-image",
     "scikit-learn",
 ]
+eval = [
+    "pandas",
+    "opencv-python",
+    "pycocotools",
+    "numba",
+    "python-rapidjson",
+    "yt-dlp",
+    "gitpython",
+]
+
+[project.scripts]
+sam3 = "sam3.cli:main"
 
 [project.urls]
-"Homepage" = "https://github.com/facebookresearch/sam3"
+Homepage = "https://github.com/facebookresearch/sam3"
 "Bug Tracker" = "https://github.com/facebookresearch/sam3/issues"
 
-[tool.setuptools.packages.find]
-include = ["sam3*"]
-exclude = ["build*", "scripts*", "examples*"]
+# ---------------------------------------------------------------------------
+# Hatch
+# ---------------------------------------------------------------------------
 
-[tool.setuptools.package-data]
-sam3 = ["assets/*.txt.gz"]
+[tool.hatch.version]
+path = "sam3/__init__.py"
 
-[tool.setuptools.dynamic]
-version = {attr = "sam3.__version__"}
+[tool.hatch.build.targets.wheel]
+packages = ["sam3"]
 
-[tool.black]
+[tool.hatch.build.targets.wheel.shared-data]
+"sam3/assets" = "sam3/assets"
+
+# ---------------------------------------------------------------------------
+# Ruff (linting + formatting)
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py310"
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
-include = '\.pyi?$'
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-
-[tool.usort]
-first_party_detection = false
-
-[tool.ufmt]
-formatter = "ruff-api"
-
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-
-[[tool.mypy.overrides]]
-module = [
-    "torch.*",
-    "torchvision.*",
-    "timm.*",
-    "numpy.*",
-    "PIL.*",
-    "tqdm.*",
-    "ftfy.*",
-    "regex.*",
-    "iopath.*",
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
 ]
-ignore_missing_imports = true
+ignore = [
+    "E501",   # line too long (formatter handles this)
+    "E741",   # ambiguous variable name (common in math-heavy code)
+    "B905",   # zip without strict= (too noisy for existing code)
+    "SIM108", # ternary operator (readability preference)
+    "UP015",  # redundant open mode (not worth churn)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["sam3"]
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
