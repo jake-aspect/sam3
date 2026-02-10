@@ -43,7 +43,7 @@ dependencies = [
 #   pip install sam3[triton]   # Linux + CUDA (fastest EDT / NMS kernels)
 #   pip install sam3[cupy]     # Linux or Windows + CUDA (zero-copy GPU scipy)
 triton = ["triton"]
-cupy = ["cupy-cuda12x"]        # adjust to cupy-cuda11x if needed
+cupy = ["cupy-cuda13x"]        # adjust to cupy-cuda11x if needed
 
 dev = [
     "pytest",
@@ -120,7 +120,6 @@ select = [
     "UP",   # pyupgrade
     "B",    # flake8-bugbear
     "SIM",  # flake8-simplify
-    "TCH",  # flake8-type-checking
 ]
 ignore = [
     "E501",   # line too long (formatter handles this)

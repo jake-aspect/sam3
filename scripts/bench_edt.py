@@ -89,9 +89,9 @@ def run_benchmarks(
         cpu_methods["edt-cv2"] = build_pair(edt._edt_cv2_threaded, edt._edt_cv2)  # ty:ignore[possibly-missing-attribute]
     if edt._HAS_TRITON:
         # has no multithreading
-        cpu_methods["edt-triton"] = edt._edt_triton  # type:ignore[possibly-missing-attribute]
+        cuda_methods["edt-triton"] = edt._edt_triton  # type:ignore[possibly-missing-attribute]
     if edt._HAS_CUPY:
-        cpu_methods["edt-cupy"] = build_pair(edt._edt_cupy_threaded, edt._edt_cupy)  # type:ignore[possibly-missing-attribute]
+        cuda_methods["edt-cupy"] = build_pair(edt._edt_cupy_threaded, edt._edt_cupy)  # type:ignore[possibly-missing-attribute]
 
     for size in sizes:
         torch.manual_seed(0)
@@ -104,7 +104,7 @@ def run_benchmarks(
         if not include_cuda or not torch.cuda.is_available() or not cuda_methods:
             continue
 
-        data_cuda = data_cpu.cuda()
+        data_cuda = data_cpu.to(device="cuda")
 
         for name, fn in cuda_methods.items():
             mean, std = _bench_fn(fn, data_cuda, repeats=repeats)

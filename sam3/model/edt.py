@@ -119,6 +119,21 @@ _HAS_CUPY = True
 try:
     import cupy as cp  # type: ignore[unresolved-import]
     import cupyx.scipy.ndimage  # type: ignore[unresolved-import]
+
+    # Smoke-test: CuPy JIT-compiles GPU kernels on first use, which requires
+    # the CUDA Toolkit (nvcc + headers).  If only the driver is installed the
+    # import succeeds but every kernel launch fails with a RuntimeError.
+    # Catch that early so we can fall back to another backend gracefully.
+    try:
+        (cp.array([1, 0], dtype=cp.float32) != 0).get()  # trigger kernel compile
+    except RuntimeError as _cupy_err:
+        warnings.warn(
+            f"CuPy is installed but cannot compile CUDA kernels: {_cupy_err} "
+            "-- Is the CUDA Toolkit (nvcc) installed and on PATH? "
+            "Falling back to the next available EDT backend.",
+            stacklevel=2,
+        )
+        _HAS_CUPY = False
 except ModuleNotFoundError:
     _HAS_CUPY = False
 
