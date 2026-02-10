@@ -49,7 +49,6 @@ class Sam3VideoPredictor:
                 strict_state_dict_loading=strict_state_dict_loading,
                 apply_temporal_disambiguation=apply_temporal_disambiguation,
             )
-            .cuda()
             .eval()
         )
 

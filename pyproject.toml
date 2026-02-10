@@ -127,6 +127,7 @@ ignore = [
     "E741",   # ambiguous variable name (common in math-heavy code)
     "B905",   # zip without strict= (too noisy for existing code)
     "SIM108", # ternary operator (readability preference)
+    "UP007",  # Optional[T] -> T | None (not worth churn)
     "UP015",  # redundant open mode (not worth churn)
 ]
 

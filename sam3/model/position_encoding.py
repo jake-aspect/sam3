@@ -8,6 +8,8 @@ from typing import Optional
 import torch
 from torch import nn
 
+from sam3.device import COMPUTE_DEVICE
+
 
 class PositionEmbeddingSine(nn.Module):
     """
@@ -34,7 +36,7 @@ class PositionEmbeddingSine(nn.Module):
             scale = 2 * math.pi
         self.scale = scale
 
-        self.cache = {}
+        self.cache: dict[tuple[int, int], torch.Tensor] = {}
         # Precompute positional encodings under `precompute_resolution` to fill the cache
         # and avoid symbolic shape tracing errors in torch.compile in PyTorch 2.4 nightly.
         if precompute_resolution is not None:
@@ -46,9 +48,8 @@ class PositionEmbeddingSine(nn.Module):
                 (precompute_resolution // 32, precompute_resolution // 32),
             ]
             for size in precompute_sizes:
-                tensors = torch.zeros((1, 1) + size, device="cuda")
+                tensors = torch.zeros((1, 1) + size, device=COMPUTE_DEVICE)
                 self.forward(tensors)
-                # further clone and detach it in the cache (just to be safe)
                 self.cache[size] = self.cache[size].clone().detach()
 
     def _encode_xy(self, x, y):
@@ -89,10 +90,9 @@ class PositionEmbeddingSine(nn.Module):
 
     @torch.no_grad()
     def forward(self, x):
-        cache_key = None
         cache_key = (x.shape[-2], x.shape[-1])
         if cache_key in self.cache:
-            return self.cache[cache_key][None].repeat(x.shape[0], 1, 1, 1)
+            return self.cache[cache_key].to(x.device)[None].repeat(x.shape[0], 1, 1, 1)
         y_embed = (
             torch.arange(1, x.shape[-2] + 1, dtype=torch.float32, device=x.device)
             .view(1, -1, 1)

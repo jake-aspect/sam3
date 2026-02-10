@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch
+from sam3.device import COMPUTE_DEVICE
 from sam3.sam.transformer import RoPEAttention
 from torch import nn, Tensor
 from torchvision.ops.roi_align import RoIAlign
@@ -275,7 +276,7 @@ class TransformerDecoder(nn.Module):
             if resolution is not None and stride is not None:
                 feat_size = resolution // stride
                 coords_h, coords_w = self._get_coords(
-                    feat_size, feat_size, device="cuda"
+                    feat_size, feat_size, device=COMPUTE_DEVICE
                 )
                 self.compilable_cord_cache = (coords_h, coords_w)
                 self.compilable_stored_size = (feat_size, feat_size)
@@ -339,6 +340,8 @@ class TransformerDecoder(nn.Module):
         ):
             # good, hitting the cache, will be compilable
             coords_h, coords_w = self.compilable_cord_cache
+            coords_h = coords_h.to(reference_boxes.device)
+            coords_w = coords_w.to(reference_boxes.device)
         else:
             # cache miss, will create compilation issue
             # In case we're not compiling, we'll still rely on the dict-based cache
